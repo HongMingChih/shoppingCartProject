@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE struts-config PUBLIC
+          "-//Apache Software Foundation//DTD Struts Configuration 1.1//EN"
+          "http://jakarta.apache.org/struts/dtds/struts-config_1_1.dtd">
+<struts-config>
+ 	<form-beans>
+        <form-bean name="formMember" type="com.training.formbean.FormMember"/>
+        <form-bean name="formCond" type="com.training.formbean.FormCond"/>
+    </form-beans>
+    <action-mappings>
+        <action path="/BackendAction" type="com.training.action.BackendAction" parameter="action">
+     	   <forward name="queryGoodView" path="/VM_Backend_GoodsList.jsp"/>
+     	   <forward name="goodsCreateView" path="/VM_Backend_GoodsCreate.jsp" redirect="true"/>
+     	   <forward name="updateGoodView" path="/VM_Backend_GoodsReplenishment.jsp" redirect="true"/>
+     	   <forward name="salesReportView" path="/VM_Backend_GoodsSaleReport.jsp"/>
+        </action>
+         <action path="/Cond" type="com.training.action.BackendAction" parameter="action" name="formCond">
+     	   <forward name="queryGoodView" path="/VM_Backend_GoodsList.jsp"/>
+        </action>
+        
+        <action path="/FrontendAction" type="com.training.action.FrontendAction" parameter="action" name="formMember">
+         <forward name="loginSuccess" path="/VendingMachine.jsp"/>
+     	    <forward name="loginError" path="/index.jsp" redirect="true"/>
+     	     <forward name="vendingView" path="/VendingMachine.jsp"/>
+     	     <forward name="vendingBuyView" path="/VendingMachine.jsp" redirect="true"/>
+        </action>
+    </action-mappings>
+</struts-config>
