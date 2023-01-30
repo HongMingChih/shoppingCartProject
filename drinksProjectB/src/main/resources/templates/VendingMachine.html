@@ -1,0 +1,187 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org/">
+
+<head>
+	<meta http-equiv="Content-Language" content="zh-tw">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="/path/to/jquery.min.js"></script>
+	
+<title>販賣機</title>
+	<style type="text/css">
+		.page {
+			display:inline-block;
+			padding-left: 10px;
+		}
+		body{
+        text-align: center;
+   		 }
+	</style>
+	<script type="text/javascript">
+	
+	</script>
+</head>
+
+<body>
+
+
+<table style="width:1000;height:400; text-align:center" >
+	<tr>
+		<td colspan="2" align="right">
+			<form action="queryFrontend" method="get">
+				<input type="hidden" name="action" value="searchGoods"/>
+				<input type="hidden" name="pageNo" value="1"/>
+				<input type="text" name="searchKeyword"/>
+				<input type="submit" value="商品查詢"/>
+			</form>
+		</td>
+	</tr>
+	<tr>
+		<form action="FrontendServlet" method="post">
+		<input type="hidden" name="customerID" th:value="${BM.IDENTIFICATION_NO}"/>
+		<td style="width:400;height:200;text-align:center">		
+			<img border="0" src="../DrinksImage/coffee.jpg" width="200" height="200" >			
+			<h1>歡迎光臨，<div th:text="${BM.CUSTOMER_NAME}"></div></h1>		
+			<a href="VM_Backend_GoodsList" align="left" >後臺頁面</a>
+<!-- 			&nbsp; &nbsp; -->
+			<a href="logout" align="left">登出</a>
+			<br/><br/>
+			<font face="微軟正黑體" size="4" >
+				<b>投入:</b>
+				<input type="number" name="inputMoney" max="100000" min="0"  size="5" value="0">
+				<b>元</b>		
+				<b><input type="submit" value="送出">					
+				<br/><br/>
+			</font>
+			<div style="border-width:3px;border-style:dashed;border-color:#FFAC55;
+				padding:5px;width:300px;">
+				<p style="color: blue;">
+				<div th:if="${session.APR}" th:text="${session.message}" style="color:green"></div>
+				<div th:unless="${session.APR}" th:text="購買商品" style="color:green"></div></p>
+				<p style="margin: 10px;">
+					<div th:if="${IPM}" th:text="'投入金額 :' +${IPM}"></div>
+						<div th:if="${BEYOND}" th:text="${BEYOND}" style="color:red"></div>
+					<div th:if="${BEYOND}" th:text="'退回: '+${inputMoney}+'元'" style="color:red"></div>
+<!-- 					投入金額:<div th:if="${SRC}" th:text="${SRC.goodsBuyPrice}"></div> -->
+<!-- 					<div th:unless="${IPM}" th:text="投入金額：0 "></div> -->
+				</p>
+				<p style="margin: 10px;">
+<!-- 					購買金額：111 -->
+					<div th:if="${messagePrice}" th:text="${messagePrice}" style="color:red"></div>
+					<div th:if="${messagePrice}" th:text="'退回: '+${inputMoney}+'元'" style="color:red"></div>
+					<div th:if="${session.APR}" th:text="'購買金額: '+${session.APR}"></div>
+					<div th:if="${APRS}" th:text="'購買金額: '+${APRS}"></div>
+<!-- 					<div th:unless="${session.APR}" th:text="購買金額：0 "></div> -->
+				</p>
+				<p style="margin: 10px;">
+<!-- 					找零金額：39 -->
+					<div th:if="${IPM}" th:text="'找零金額 :' +${CHA}"></div>
+					<div th:unless="${IPM}" th:text="找零金額：0 "></div>
+				</p>
+				<p style="margin: 10px;">
+					<div th:if="${SRC}" th:text="${SRC.goodsName}+' : '+${SRC.goodsBuyPrice}+' * '+${SRC.buyQuantity}"></div>
+		
+			
+					<div th:if="${session.srcList}">
+						<table>
+							<tr>
+								<th>商品名稱</th>
+								<th>價格</th>
+								<th>數量</th>
+								<th>金額</th>
+							</tr>
+							<tr th:each="src : ${session.srcList}">
+								<td th:text="${src.goodsName}"></td>
+								<td th:text="${src.goodsBuyPrice}"></td>
+								<td th:text="${src.buyQuantity}"></td>
+								<td th:text="${src.buyAmount}"></td>
+							</tr>
+						</table>
+					</div>
+					
+						<div th:if="${srcSList}">
+						<table>
+							<tr>
+								<th>商品名稱</th>
+								<th>價格</th>
+								<th>數量</th>
+								<th>金額</th>
+							</tr>
+							<tr th:each="src : ${srcSList}">
+								<td th:text="${src.goodsName}"></td>
+								<td th:text="${src.goodsBuyPrice}"></td>
+								<td th:text="${src.buyQuantity}"></td>
+								<td th:text="${src.buyAmount}"></td>
+							</tr>
+						</table>
+					</div>
+					
+					</div>
+				</td>
+		</form>	
+			
+		<td width="600" height="400">
+			<input type="hidden" name="action" value="buyGoods"/>
+			<table border="1" style="border-collapse: collapse">
+				<tr>
+					<th:block th:each="goods, iterStat : ${BG}">
+						<td width="300">
+							<font face="微軟正黑體" size="5" th:text="${goods.GOODS_NAME}"></font>
+							<br />
+							<font th:text="${goods.PRICE}+' 元/件'"></font>
+							<br />
+							<img th:src="@{'/DrinksImage/' + ${goods.IMAGE_NAME}}" th:alt="${goods.IMAGE_NAME}" width="150"
+								height="150">
+							<br />
+							<font face="微軟正黑體" size="3">
+								<form action="buyGoods" method="POST">
+									<input type="hidden" name="customerID" th:value="${BM.IDENTIFICATION_NO}"/>
+									<input type="hidden" name="action" value="buyGoods" />
+									<input type="hidden" name="goodsName" th:value="${goods.GOODS_NAME}" />
+									<input type="hidden" name="PRICE" th:value="${goods.PRICE}" />
+									購買<input type="number" name="buyQuantity" th:min="0" th:max="${goods.QUANTITY}" size="5"
+										value="0">件
+									<br />
+									<p style="color: red;" th:text="'(庫存 ' + ${goods.QUANTITY} + ' 件)'"></p>
+									<input type="submit" value="購買" />
+								</form>
+							</font>
+						</td>
+						<!-- 在每 3 個商品之后添加新行 -->
+						<th:block th:if="${iterStat.index % 3 == 2}">
+				</tr>
+				<tr>
+					</th:block>
+				</tr>
+			</table>
+		</td>
+			
+	</tr>
+	<tr>
+    <td colspan="2" align="right">
+        <h3 class="page"> <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo='1', customerID=${BM.IDENTIFICATION_NO})}"> 上一頁 </a> </h3>
+        <h3 class="page" th:each="i : ${#numbers.sequence(1, ROWS)}">
+            <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo=${i}, customerID=${BM.IDENTIFICATION_NO})}">
+                <span th:text="${i}"></span>
+            </a>
+        </h3>
+        <h3 class="page"> <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo=${ROWS}, customerID=${BM.IDENTIFICATION_NO})}"> 下一頁 </a> </h3>
+    </td>
+</tr>
+
+<!-- 	<tr> -->
+<!--     <td colspan="2" align="right">     -->
+<!--         <h3 class="page"> <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo='1', customerID=${BM.IDENTIFICATION_NO})}"> 上一頁 </a> </h3> -->
+<!--         <h3 class="page"> <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo='1', customerID=${BM.IDENTIFICATION_NO})}"> 1 </a> </h3> -->
+<!--         <h3 class="page"> <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo='2', customerID=${BM.IDENTIFICATION_NO})}"> 2 </a> </h3> -->
+<!--         <h3 class="page"> <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo='3', customerID=${BM.IDENTIFICATION_NO})}"> 3 </a> </h3>   -->
+<!--         <h3 class="page"> <a th:href="@{/beverage/FrontendPage(action='FrontendPage', pageNo='4', customerID=${BM.IDENTIFICATION_NO})}"> 下一頁 </a> </h3> -->
+<!--     </td> -->
+<!-- </tr> -->
+
+</table>
+
+
+</body>
+
+</html>

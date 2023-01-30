@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521:xe
+    username: LOCAL
+    password: root
+    driver-class-name: oracle.jdbc.driver.OracleDriver
+#    jndi-name: java:comp/env/jdbc/oracle
+server:
+  port: 8081
+  
+#mybatis分页配置
+pagehelper:
+  helper-dialect: oracle
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countsql
+    

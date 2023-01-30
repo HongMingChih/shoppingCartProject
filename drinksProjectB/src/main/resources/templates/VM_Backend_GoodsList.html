@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org/">
+<head>
+<meta http-equiv="Content-Language" content="zh-tw">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>販賣機-後臺</title>
+	<script type="text/javascript">
+
+	</script>
+</head>
+<body>
+	<h1>Vending Machine Backend Service</h1><br/>		
+	<table border="1" style="border-collapse:collapse;margin-left:25px;">
+		<tr>
+			<td width="200" height="50" align="center">
+<!-- 				<a href="VM_Backend_GoodsList.html">商品列表</a> -->
+				<a href="VM_Backend_GoodsList">商品列表</a>
+			</td>
+			<td width="200" height="50" align="center">
+				<a href="VM_Backend_GoodsReplenishment">商品維護作業</a>
+			</td>
+			<td width="200" height="50" align="center">
+				<a href="VM_Backend_GoodsCreate">商品新增上架</a>
+			</td>
+			<td width="200" height="50" align="center">
+				<a href="VM_Backend_GoodsSaleReport">銷售報表</a>
+			</td>
+		</tr>
+	</table>
+	<br/><br/><HR>
+		
+	<h2>商品列表</h2><br/>
+
+	
+	<div style="margin-left:25px;">
+    商品總數: <font th:text="${#lists.size(BG)}"></font> 件
+	<table border="1">
+		<tbody>
+			<tr height="50">
+				<td width="150"><b>商品名稱</b></td> 
+				<td width="100"><b>商品價格</b></td>
+				<td width="100"><b>現有庫存</b></td>
+				<td width="100"><b>商品狀態</b></td>
+			</tr>
+			<tr height="30" th:each="goods, iterStat : ${BG}">
+				<td> <font th:text="${BG[iterStat.index].GOODS_NAME}"></font></td> 
+				<td> <font th:text="${BG[iterStat.index].PRICE}"></font></td>
+				<td><font th:text="${BG[iterStat.index].QUANTITY}"></font></td>
+				<td>
+					<span th:if="${BG[iterStat.index].STATUS} == '1'">已上架</span>
+					<span th:unless="${BG[iterStat.index].STATUS} == '1'">未上架</span>
+				</td>
+			</tr>		
+			
+		</tbody>
+	</table>
+	</div>
+</body>
+</html>

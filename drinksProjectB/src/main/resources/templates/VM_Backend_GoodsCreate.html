@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org/">
+<head>
+<meta http-equiv="Content-Language" content="zh-tw">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/path/to/jquery.min.js"></script>
+<title>販賣機-後臺</title>
+	<script type="text/javascript">
+		async function getSession() {
+			try {
+				const response = await $.ajax({
+					url: '/session',
+					type: 'GET'
+				});
+				return response;
+			} catch (error) {
+				return null;
+			}
+		}
+
+		window.onload = async function () {
+			const session = await getSession();
+			if (session) {
+				// session 存在，允许跳转
+			} else {
+				// session 不存在，禁止跳转
+				window.history.forward(1);
+			}
+		}
+	</script>
+</head>
+<body>
+	<h1>Vending Machine Backend Service</h1><br/>		
+	<table border="1" style="border-collapse:collapse;;margin-left:25px;">
+		<tr>
+			<td width="200" height="50" align="center">
+<!-- 				<a href="VM_Backend_GoodsList.html">商品列表</a> -->
+				<a href="VM_Backend_GoodsList">商品列表</a>
+			</td>
+			<td width="200" height="50" align="center">
+				<a href="VM_Backend_GoodsReplenishment">商品維護作業</a>
+			</td>
+			<td width="200" height="50" align="center">
+				<a href="VM_Backend_GoodsCreate">商品新增上架</a>
+			</td>
+			<td width="200" height="50" align="center">
+				<a href="VM_Backend_GoodsSaleReport">銷售報表</a>
+			</td>
+		</tr>
+	</table>
+	<br/><br/><HR>
+		
+	<h2>商品新增上架</h2><br/>
+		<div th:if="${message}" th:text="${message}" style="color:green"></div>
+	<div style="margin-left:25px;">
+	<form action="createGoods" enctype="multipart/form-data" method="POST">
+		<p>
+			飲料名稱：
+			<input type="text" name="goodsName" size="10" required/>
+		</p>
+		<p>
+			設定價格： 
+			<input type="number" name="goodsPrice" size="5" value="0" min="0" max="1000"/>
+		</p>
+		<p>
+			初始數量：
+			<input type="number" name="goodsQuantity" size="5" value="0" min="0" max="1000"/>
+		</p>
+		<p>
+			商品圖片：
+			<input type="file" name="goodsImage"/>
+		</p>
+		<p>
+			商品狀態：
+			<select name="status">
+				<option value="1">上架</option>
+				<option value="0">下架</option>				
+			</select>
+		</p>
+		<p>
+			<input type="submit" value="確認">
+		</p>
+	</form>
+	</div>
+</body>
+</html>
