@@ -21,7 +21,7 @@
 						<H3>登入帳號</H3>
 					</div>
 					<div class="card-body">
-						<form action="FrontendAction.do?action=login" method="post">
+						<form action="LoginAction.do?action=login" method="post">
 							<div class="form-floating mb-3">
 								<input type="text" class="form-control" name="identificationNo"" 
 									required="required" placeholder="請輸入帳號(身分證字號)">

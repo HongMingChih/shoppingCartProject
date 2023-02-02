@@ -24,5 +24,13 @@
      	     <forward name="vendingView" path="/VendingMachine.jsp"/>
      	     <forward name="vendingBuyView" path="/VendingMachine.jsp" redirect="true"/>
         </action>
+        
+          <action path="/LoginAction" type="com.training.action.LoginAction" parameter="action">
+<!--          <forward name="success" path="/BackendAction.do?action=queryGood" redirect="true"/> -->
+         <forward name="success" path="/VendingMachine.jsp" redirect="true"/>
+     	    <forward name="fail" path="/index.jsp" redirect="true"/>
+        </action>
+       
+        
     </action-mappings>
 </struts-config>

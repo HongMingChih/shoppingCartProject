@@ -36,7 +36,7 @@
 			<img border="0" src="DrinksImage/coffee.jpg" width="200" height="200" >			
 			<h1>歡迎光臨，Tomcat！</h1>		
 			<a href="BackendAction.do?action=queryGood" align="left" >後臺頁面</a>&nbsp; &nbsp;
-			<a href="#" align="left">登出</a>
+			<a href="LoginAction.do?action=logout" align="left">登出</a>
 			<br/><br/>
 			<font face="微軟正黑體" size="4" >
 				<b>投入:</b>
