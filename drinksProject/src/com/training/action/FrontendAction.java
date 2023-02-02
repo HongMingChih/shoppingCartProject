@@ -80,26 +80,25 @@ public class FrontendAction extends DispatchAction {
 		System.out.println("投入金額"+inputMoney);
 		System.out.println("購買金額"+allMoney);
 		System.out.println("找零金額"+change);
-		if (inputMoney>allMoney) {
+		if (inputMoney>=allMoney) {
 			for (Map.Entry<Goods, Integer> entry : goodsOrders.entrySet()) {
 				Goods goods = entry.getKey();
 				System.out.println("商品名稱:"+goods.getGoodsName()+
 						" 商品金額:"+goods.getGoodsPrice()+
 						" 購買數量:"+entry.getValue());
 			}
+			// 建立訂單
+			boolean insertSuccess = frontendService.batchCreateGoodsOrder(customerID, goodsOrders);
+			if(insertSuccess){System.out.println("建立訂單成功!");}
+			// Step3:交易完成更新扣商品庫存數量
+			// 將顧客所購買商品扣除更新商品庫存數量
+			goodsOrders.forEach((goods, buyQuantity) -> 
+			{goods.setGoodsQuantity(goods.getGoodsQuantity() - buyQuantity);});
+			boolean updateSuccess = frontendService.batchUpdateGoodsQuantity(goodsOrders.keySet().stream().collect(Collectors.toSet()));
+			if(updateSuccess){System.out.println("商品庫存更新成功!");}
+		}else {
+			System.out.println("投入金額不足 ");
 		}
-		
-		// 建立訂單
-		boolean insertSuccess = frontendService.batchCreateGoodsOrder(customerID, goodsOrders);
-		if(insertSuccess){System.out.println("建立訂單成功!");}
-		// Step3:交易完成更新扣商品庫存數量
-		// 將顧客所購買商品扣除更新商品庫存數量
-		goodsOrders.forEach((goods, buyQuantity) -> 
-		{goods.setGoodsQuantity(goods.getGoodsQuantity() - buyQuantity);});
-		boolean updateSuccess = frontendService.batchUpdateGoodsQuantity(goodsOrders.keySet().stream().collect(Collectors.toSet()));
-		if(updateSuccess){System.out.println("商品庫存更新成功!");}
-		
-		
 		
 		
 		ActionForward actionForward=mapping.findForward("vendingBuyView");

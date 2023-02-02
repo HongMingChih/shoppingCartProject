@@ -56,13 +56,12 @@ public class BackendAction extends DispatchAction{
 			throws Exception {
 		System.out.println("conditionalGoods...");
 		
-//		String goodsName=new String(request.getParameter("goodsName").getBytes("ISO-8859-1"), "UTF-8");
 		
 		// 將表單資料使用 struts ActionForm 方式自動綁定，省去多次由 request getParameter 取表單資料的工作
 		FormCond formCond=(FormCond) form;
 		Cond cond=new Cond();
 		BeanUtils.copyProperties(cond, formCond);
-		cond.setGoodsName(new String(request.getParameter("goodsName").getBytes("ISO-8859-1"), "UTF-8"));
+//		cond.setGoodsName(new String(request.getParameter("goodsName").getBytes("ISO-8859-1"), "UTF-8"));
 		 int endRowNo=(cond.getPageNo()*6)+1;
 		 int startRowNo=endRowNo-7;
 		Set<Goods> queryCond=backendService.queryCond(cond, startRowNo, endRowNo);
