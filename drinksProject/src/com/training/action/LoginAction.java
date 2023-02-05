@@ -74,6 +74,8 @@ public class LoginAction extends DispatchAction {
     	HttpSession session = request.getSession();
 		System.out.println("謝謝您的光臨!");
 		session.removeAttribute("account");		
+		session.removeAttribute("carGoods");		
+		session.removeAttribute("allPriceSession");		
     	
     	return mapping.findForward("fail");
     }

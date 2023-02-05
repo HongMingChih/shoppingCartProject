@@ -8,29 +8,27 @@
 package com.training.action;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.actions.DispatchAction;
 
-import com.training.formbean.FormMember;
 import com.training.model.Goods;
-import com.training.model.Member;
-import com.training.service.BackendService;
 import com.training.service.FrontendService;
-import com.training.vo.GoodsOrder;
+import com.training.vo.BuyGoodsRtn;
+import com.training.vo.GoodsResult;
 
 /**
 *
@@ -42,66 +40,93 @@ import com.training.vo.GoodsOrder;
 *TODO:
 *
 */
+@MultipartConfig
 public class FrontendAction extends DispatchAction {
 	
 	private FrontendService frontendService=FrontendService.getInstance();
-	
+	//訂單傳送訊息清單
+		public ActionForward vendingBuyViewMessage(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
+				HttpServletResponse response)
+				throws Exception {
+			System.out.println("vendingBuyViewMessage...");
+			BuyGoodsRtn buyGoodsRtn= (BuyGoodsRtn) request.getAttribute("buyGoodsRtn");
+			Map<Goods, Integer> buyGoods=  (Map<Goods, Integer>) request.getAttribute("buyGoodsList");
+			
+			request.setAttribute("buyGoodsRtn", buyGoodsRtn);
+			request.setAttribute("buyGoodsList", buyGoods);
+			ActionForward actionForward=mapping.findForward("vendingBuyMessageView");
+			return actionForward;
+		}
+		
+		/**
+		 * 建立訂單 並更改資料庫
+		 * @param mapping
+		 * @param form
+		 * @param request
+		 * @param response
+		 * @return
+		 * @throws Exception
+		 */
 	public ActionForward buyGoods(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
 			HttpServletResponse response)
 			throws Exception {
 		System.out.println("buyGoods...");
+		HttpSession session = request.getSession();
+		ActionForward actionForward=null;
 		String customerID=request.getParameter("customerID");
 		int inputMoney= Integer.parseInt(request.getParameter("inputMoney"));
-		String[] goodsIDs= request.getParameterValues("goodsIDs");
-		String[] buyQuantitys= request.getParameterValues("buyQuantitys");
-		int change=0;
-		Map<Goods, Integer> goodsOrders = new HashMap<>();
-		for (int i = 0; i < goodsIDs.length; i++) {
-			if (Integer.parseInt(buyQuantitys[i])!=0) {
-				// 3.前臺顧客購買建立訂單
-				// Step1:查詢顧客所購買商品資料(價格、庫存)
-				Set<BigDecimal> goodsID = new HashSet<>();
-				goodsID.add(new BigDecimal(goodsIDs[i]));
-//				allMoney+=frontendService.allMoney(buyGoods,Integer.parseInt(buyQuantitys[i]));
-//				buyGoods.values().stream().forEach(g -> System.out.println(g));	
-				int buyQuantity=Integer.parseInt(buyQuantitys[i]);
-				goodsID.stream().forEach(goodsId -> {
-					Goods g = frontendService.queryGoodsById(goodsId.toString());
-					if (g.getGoodsQuantity()>=buyQuantity) {
-						goodsOrders.put(g, buyQuantity); 
-					}else {
-						System.out.println("庫存不足: "+g.getGoodsName()+" 剩餘庫存: "+g.getGoodsQuantity());
-					}
-				});
-			}
+		Integer allPrice= session.getAttribute("allPriceSession")==null?0:(Integer) session.getAttribute("allPriceSession");
+		BuyGoodsRtn buyGoodsRtn=new BuyGoodsRtn();
+		buyGoodsRtn.setInputMoney(inputMoney);//輸入金額
+		buyGoodsRtn.setAllMoney(allPrice);//總消費金額
+		int change=inputMoney>=allPrice?change=inputMoney-allPrice:allPrice;//找零
+		buyGoodsRtn.setChange(change);	
+		if (inputMoney<allPrice||inputMoney<=0) {
+			request.setAttribute("message", "輸入金額不足，請投入正確金額!!");
+			actionForward=mapping.findForward("vendingViewError");
+			return actionForward;
 		}
-		int allMoney=frontendService.allMoney(goodsOrders);
-		change=inputMoney>=allMoney?change=inputMoney-allMoney:allMoney;
-		System.out.println("投入金額"+inputMoney);
-		System.out.println("購買金額"+allMoney);
-		System.out.println("找零金額"+change);
-		if (inputMoney>=allMoney) {
-			for (Map.Entry<Goods, Integer> entry : goodsOrders.entrySet()) {
+		if (session.getAttribute("carGoods") == null) {
+			request.setAttribute("message", "您還沒選購商品!!");
+			request.setAttribute("buyGoodsRtn", buyGoodsRtn);
+			actionForward=mapping.findForward("vendingBuyMessage");
+			return actionForward;
+		}
+		
+	
+		Map<Goods, Integer> carGoods = (Map<Goods, Integer>) session.getAttribute("carGoods");
+		Map<Goods, Integer> buyGoods=new LinkedHashMap<>();
+			for (Map.Entry<Goods, Integer> entry : carGoods.entrySet()) {
 				Goods goods = entry.getKey();
-				System.out.println("商品名稱:"+goods.getGoodsName()+
-						" 商品金額:"+goods.getGoodsPrice()+
-						" 購買數量:"+entry.getValue());
+				Goods queryGoods=frontendService.queryGoodsById(goods.getGoodsID().toString());
+				if (queryGoods.getGoodsQuantity()>= entry.getValue()) {
+					goods.setGoodsQuantity(goods.getGoodsQuantity()-entry.getValue());
+					buyGoods.put(goods,entry.getValue());
+				}else {
+					System.out.println("目前商品庫存不足: "+goods.getGoodsName()+" 剩餘庫存: "+goods.getGoodsQuantity());
+					request.setAttribute("message", "庫存不足，請選取適當數量!!");
+					session.removeAttribute("carGoods");
+					session.removeAttribute("allPriceSession");	
+					actionForward=mapping.findForward("vendingViewError");
+					return actionForward;
+				}
 			}
 			// 建立訂單
-			boolean insertSuccess = frontendService.batchCreateGoodsOrder(customerID, goodsOrders);
+			boolean insertSuccess = frontendService.batchCreateGoodsOrder(customerID, buyGoods);
 			if(insertSuccess){System.out.println("建立訂單成功!");}
 			// Step3:交易完成更新扣商品庫存數量
 			// 將顧客所購買商品扣除更新商品庫存數量
-			goodsOrders.forEach((goods, buyQuantity) -> 
-			{goods.setGoodsQuantity(goods.getGoodsQuantity() - buyQuantity);});
-			boolean updateSuccess = frontendService.batchUpdateGoodsQuantity(goodsOrders.keySet().stream().collect(Collectors.toSet()));
+			boolean updateSuccess = frontendService.batchUpdateGoodsQuantity(buyGoods.keySet().stream().collect(Collectors.toSet()));
 			if(updateSuccess){System.out.println("商品庫存更新成功!");}
-		}else {
-			System.out.println("投入金額不足 ");
-		}
+			
 		
+			request.setAttribute("buyGoodsRtn", buyGoodsRtn);
+			 request.setAttribute("buyGoodsList", buyGoods);
+			 session.removeAttribute("carGoods");
+			 session.removeAttribute("allPriceSession");	
+			 
+		actionForward=mapping.findForward("vendingBuyMessage");
 		
-		ActionForward actionForward=mapping.findForward("vendingBuyView");
 		return actionForward;
 	}
 	
@@ -112,57 +137,29 @@ public class FrontendAction extends DispatchAction {
 		String searchKeyword=request.getParameter("searchKeyword");
 		searchKeyword=searchKeyword==null?"":searchKeyword;
 		
-		int pageNo=Integer.parseInt(request.getParameter("pageNo"));
+		int pageNo=request.getParameter("pageNo")==null?1:Integer.parseInt(request.getParameter("pageNo"));
 //		0-7  6-13  12-19 18-25
 //		1     2      3     4
 //	    7
 	    int	endRowNo=(pageNo*6)+1;
 	    int	startRowNo=endRowNo-7;
-	    Set<Goods> searchGoods=frontendService.searchGoods(searchKeyword, startRowNo, endRowNo);
+	    GoodsResult goodsResult=frontendService.searchGoods(searchKeyword, startRowNo, endRowNo);
+	    Set<Goods> searchGoods=goodsResult.getGoods();
 	    for (Goods goods : searchGoods) {
 			System.out.println(goods.toString());
 		}
-		
+	    int totalPages = goodsResult.getTotalRecords()!=0?(goodsResult.getTotalRecords() + 5) / 6:0;
+	    request.setAttribute("searchGoods", searchGoods);
+	    request.setAttribute("totalPages", totalPages);
+	    request.setAttribute("searchKeyword", searchKeyword);
+	    request.setAttribute("pageNo", pageNo);
 		ActionForward actionForward=mapping.findForward("vendingView");
 		return actionForward;
 	}
 	
 	
-	public ActionForward login(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
-			HttpServletResponse response)
-			throws Exception {
-		// 將表單資料使用 struts ActionForm 方式自動綁定，省去多次由 request getParameter 取表單資料的工作
-		FormMember formMember=(FormMember) form;
-		
-		// 將Struts FormMember 資料複製 member
-		// 將表單資料轉換儲存資料物件(commons-beanutils-1.8.0.jar)
-		Member member =new Member();
-		BeanUtils.copyProperties(member,formMember);
-		Member acc_verification=frontendService.queryMember(member);
-		
-		String message = acc_verification!=null ? "帳戶登入成功！" : "帳戶登入失敗！";
-		System.out.println(message);
-		ActionForward actionForward= acc_verification!=null ? mapping.findForward("loginSuccess") : mapping.findForward("loginError");
-		return actionForward;
-	}
 	
-	public ActionForward register(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
-			HttpServletResponse response)
-			throws Exception {
-		// 將表單資料使用 struts ActionForm 方式自動綁定，省去多次由 request getParameter 取表單資料的工作
-				FormMember formMember=(FormMember) form;
-		// 將Struts BackedActionForm 資料複製 Goods
-		// 將表單資料轉換儲存資料物件(commons-beanutils-1.8.0.jar)
-		Member member =new Member();
-		BeanUtils.copyProperties(member,formMember);
-		Member acc_verification=frontendService.register(member);
-		
-		String message = acc_verification.getCustomerName()!=null ? "帳戶創建成功！" : "帳戶名稱已重複！";
-		System.out.println(message);
-		
-		ActionForward actionForward=mapping.findForward("loginError");
-		return actionForward;
-	}
+	
 	
 	
 }

@@ -25,15 +25,16 @@ public class LoginCheckFilter implements Filter {
 		// 檢查 Sesssion Scope 中是否存在登入的使用者 ("account").
 		HttpServletRequest httpRequest = (HttpServletRequest)request;		
 		HttpSession session = httpRequest.getSession();
+		
 		Member account = (Member) session.getAttribute("account");
         // 如果存在就放行.
         if(account != null){
             chain.doFilter(request,response);
         } else {
-            // 如果不存在就必須先判斷目前是否為登入的請求,是的話則進行後續帳密驗證比對 LoginAction
+            // 如果不存在就必須先判斷目前是否為登入/註冊的請求,是的話則進行後續帳密驗證比對 LoginAction
         	String requestURI = httpRequest.getRequestURI();
         	String action = request.getParameter("action");
-            if(requestURI.endsWith("LoginAction.do") && "login".equals(action)) {
+            if(requestURI.endsWith("LoginAction.do") && "login".equals(action)||requestURI.endsWith("RegisterAction.do") && "register".equals(action)) {
             	
             	chain.doFilter(request,response);
             	

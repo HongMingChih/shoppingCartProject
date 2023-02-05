@@ -9,28 +9,53 @@
     </form-beans>
     <action-mappings>
         <action path="/BackendAction" type="com.training.action.BackendAction" parameter="action">
-     	   <forward name="queryGoodView" path="/VM_Backend_GoodsList.jsp"/>
-     	   <forward name="goodsCreateView" path="/VM_Backend_GoodsCreate.jsp" redirect="true"/>
-     	   <forward name="updateGoodView" path="/VM_Backend_GoodsReplenishment.jsp" redirect="true"/>
-     	   <forward name="salesReportView" path="/VM_Backend_GoodsSaleReport.jsp"/>
+     	   <forward name="queryGoodView" path="/WEB-INF/backend/VM_Backend_GoodsList.jsp"/>
+     	   
+     	   <forward name="salesReport" path="BackendAction.do?action=salesReportView" redirect="true"/>
+     	   <forward name="salesReportView" path="/WEB-INF/backend/VM_Backend_GoodsSaleReport.jsp"/>
+     	   
+     	   <!--  -->
+     	   <forward name="goodsCreate" path="BackendAction.do?action=goodsCreateView" redirect="true"/>
+     	   <forward name="goodsCreateView" path="/WEB-INF/backend/VM_Backend_GoodsCreate.jsp" />
+     	   
+     	   <forward name="updateGood" path="BackendAction.do?action=updateGoodView" redirect="true"/>
+     	   <forward name="updateGoodView" path="/WEB-INF/backend/VM_Backend_GoodsReplenishment.jsp"/>
+     	   
         </action>
          <action path="/Cond" type="com.training.action.BackendAction" parameter="action" name="formCond">
-     	   <forward name="queryGoodView" path="/VM_Backend_GoodsList.jsp"/>
+     	   <forward name="queryGoodView" path="/WEB-INF/backend/VM_Backend_GoodsList.jsp"/>
         </action>
         
-        <action path="/FrontendAction" type="com.training.action.FrontendAction" parameter="action" name="formMember">
-         <forward name="loginSuccess" path="/VendingMachine.jsp"/>
-     	    <forward name="loginError" path="/index.jsp" redirect="true"/>
-     	     <forward name="vendingView" path="/VendingMachine.jsp"/>
-     	     <forward name="vendingBuyView" path="/VendingMachine.jsp" redirect="true"/>
+        <action path="/FrontendAction" type="com.training.action.FrontendAction" parameter="action">
+            <forward name="vendingView" path="/VendingMachine.jsp"/>
+            <forward name="vendingViewError" path="/FrontendAction.do?action=searchGoods"/>
+     	  
+     	     <forward name="vendingBuyView" path="/FrontendAction.do?action=searchGoods" redirect="true"/>
+     	     
+     	     <forward name="vendingBuyMessage" path="/FrontendAction.do?action=vendingBuyViewMessage"/>
+     	     <forward name="vendingBuyMessageView" path="/FrontendAction.do?action=searchGoods"/>
         </action>
         
           <action path="/LoginAction" type="com.training.action.LoginAction" parameter="action">
-<!--          <forward name="success" path="/BackendAction.do?action=queryGood" redirect="true"/> -->
-         <forward name="success" path="/VendingMachine.jsp" redirect="true"/>
-     	    <forward name="fail" path="/index.jsp" redirect="true"/>
+         <forward name="success" path="/FrontendAction.do?action=searchGoods" redirect="true"/>
+<!--         	 <forward name="success" path="/VendingMachine.jsp" redirect="true"/> -->
+         
+     	     <forward name="fail" path="/index.jsp" redirect="true"/>
         </action>
-       
+        
+       <action path="/RegisterAction" type="com.training.action.RegisterAction" parameter="action" name="formMember">
+        	 <forward name="registerSuccess" path="/index.jsp" redirect="true"/>
+         
+     	     <forward name="fail" path="/RegisterAccount.html" redirect="true"/>
+        </action>
+         <action path="/MemberAction" type="com.training.action.MemberAction" parameter="action">
+<!--         	 <forward name="addCartGood" path="/FrontendAction.do?action=searchGoods" redirect="true"/> -->
+        	 <forward name="addCartGood" path="/FrontendAction.do?action=searchGoods" redirect="true"/>
+        	 
+        	 <forward name="queryCartGood" path="/WEB-INF/frontend/VM_Frontend_CartGoods.jsp"/>
+         
+     	     <forward name="fail" path="/RegisterAccount.html" redirect="true"/>
+        </action>
         
     </action-mappings>
 </struts-config>

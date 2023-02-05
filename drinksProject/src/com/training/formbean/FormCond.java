@@ -7,8 +7,6 @@
 
 package com.training.formbean;
 
-import java.math.BigDecimal;
-
 import org.apache.struts.action.ActionForm;
 
 /**
@@ -24,7 +22,7 @@ import org.apache.struts.action.ActionForm;
 public class FormCond extends ActionForm{
 
 private Integer pageNo;
-private Integer goodsID;
+private Integer goodsID;	
 private String goodsName;
 private Integer minPrice;
 private Integer maxPrice;

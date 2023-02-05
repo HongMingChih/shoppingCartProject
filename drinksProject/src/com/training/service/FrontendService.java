@@ -11,10 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.training.dao.BackEndDao;
 import com.training.dao.FrontEndDao;
 import com.training.model.Goods;
 import com.training.model.Member;
+import com.training.vo.GoodsResult;
 
 /**
  *
@@ -78,23 +78,14 @@ public class FrontendService {
 		return frontEndDao.queryMemberByIdentificationNo(identificationNo);
 	}
 
-	public Set<Goods> searchGoods(String searchKeyword, int startRowNo, int endRowNo) {
+	public GoodsResult searchGoods(String searchKeyword, int startRowNo, int endRowNo) {
+		
 		return frontEndDao.searchGoods(searchKeyword, startRowNo, endRowNo);
 	}
 
-	public Map<BigDecimal, Goods> queryBuyGoods(Set<BigDecimal> goodsIDs, int buyQuantitys) {
-		Goods goods = new Goods();
-		for (BigDecimal bg : goodsIDs) {
-			goods = frontEndDao.queryGoodsById(bg.toString());
-		}
-		Map<BigDecimal, Goods> mg;
-		if (goods.getGoodsQuantity() < buyQuantitys) {
-			System.out.println(goods.getGoodsName() + " 庫存不足!!" + " 剩餘數量 " + goods.getGoodsQuantity());
-			mg = new HashMap<>();
-		} else {
-			mg = frontEndDao.queryBuyGoods(goodsIDs);
-		}
-		return mg;
+	public Map<BigDecimal, Goods> queryBuyGoods(Set<BigDecimal> goodsIDs) {
+	
+		return frontEndDao.queryBuyGoods(goodsIDs);
 
 	}
 

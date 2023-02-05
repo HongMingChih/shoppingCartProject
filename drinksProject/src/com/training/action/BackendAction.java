@@ -7,14 +7,13 @@
 
 package com.training.action;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -29,7 +28,6 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.actions.DispatchAction;
 
 import com.training.formbean.FormCond;
-import com.training.formbean.FormMember;
 import com.training.model.Cond;
 import com.training.model.Goods;
 import com.training.service.BackendService;
@@ -45,9 +43,32 @@ import com.training.vo.SalesReport;
 *TODO:
 *
 */
+@MultipartConfig
 public class BackendAction extends DispatchAction{
 	
 	private BackendService backendService=BackendService.getInstance();
+	//報表跳轉
+	public ActionForward salesReportView(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
+			HttpServletResponse response)
+			throws Exception {
+		ActionForward actionForward=mapping.findForward("salesReportView");
+		return actionForward;
+	}
+	//更新跳轉
+	public ActionForward updateGoodView(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
+			HttpServletResponse response)
+			throws Exception {
+		ActionForward actionForward=mapping.findForward("updateGoodView");
+		return actionForward;
+	}
+	//新增跳轉
+	public ActionForward goodsCreateView(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
+			HttpServletResponse response)
+			throws Exception {
+		ActionForward actionForward=mapping.findForward("goodsCreateView");
+		return actionForward;
+	}
+	
 	/**
 	 * 條件查詢
 	 */
@@ -86,7 +107,7 @@ public class BackendAction extends DispatchAction{
 		System.out.println("查詢訂單總數："+queryOrderBetweenDate.size());
 		queryOrderBetweenDate.stream().forEach(g -> System.out.println(g));
 		
-		ActionForward actionForward=mapping.findForward("salesReportView");
+		ActionForward actionForward=mapping.findForward("salesReport");
 		return actionForward;
 	}
 	
@@ -104,7 +125,7 @@ public class BackendAction extends DispatchAction{
 		String message = updateGood ? "商品維護作業成功！" : "商品維護作業失敗！";
 		System.out.println(message);
 		
-		ActionForward actionForward=mapping.findForward("updateGoodView");
+		ActionForward actionForward=mapping.findForward("updateGood");
 		return actionForward;
 	}
 	//新增商品 圖片
@@ -162,7 +183,7 @@ public class BackendAction extends DispatchAction{
 		String message = createGood!=0 ? "商品新增上架成功！" : "商品新增上架失敗！";
 		System.out.println(message);
 		
-		ActionForward actionForward=mapping.findForward("goodsCreateView");
+		ActionForward actionForward=mapping.findForward("goodsCreate");
 		return actionForward;
 	}	
 	

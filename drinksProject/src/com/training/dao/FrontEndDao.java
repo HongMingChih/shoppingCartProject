@@ -22,9 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.training.DBConnectionFactory;
 import com.training.model.Goods;
 import com.training.model.Member;
+import com.training.utils.DBConnectionFactory;
+import com.training.vo.GoodsResult;
 
 
 
@@ -164,8 +165,10 @@ public class FrontEndDao {
 	 * @param endRowNo
 	 * @return Set(Goods)
 	 */
-	public Set<Goods> searchGoods(String searchKeyword, int startRowNo, int endRowNo) {
+	public GoodsResult searchGoods(String searchKeyword, int startRowNo, int endRowNo) {
 		Set<Goods> goods = new LinkedHashSet<>();
+		GoodsResult goodsResult=new GoodsResult();
+		 int totalRecords = 0;
 		// 分頁查詢
 		StringBuffer querySQL = new StringBuffer();
 		querySQL.append("SELECT * FROM ( ");
@@ -173,15 +176,25 @@ public class FrontEndDao {
 		querySQL.append("  WHERE UPPER(G.GOODS_NAME) LIKE ? AND G.STATUS = '1' ");
 		querySQL.append("  ORDER BY G.GOODS_ID ");
 		querySQL.append(") WHERE ROW_NUM > ? AND ROW_NUM < ?");
-		
+	    // 獲取所有符合條件的記錄數
+	    StringBuffer countSQL = new StringBuffer();
+	    countSQL.append("SELECT COUNT(*) FROM BEVERAGE_GOODS G ");
+	    countSQL.append("WHERE UPPER(G.GOODS_NAME) LIKE ? AND G.STATUS = '1'");
+	    
 		// Step1:取得Connection
 		try (Connection conn = DBConnectionFactory.getOracleDBConnection();
 		    // Step2:Create prepareStatement For SQL
-			PreparedStatement stmt = conn.prepareStatement(querySQL.toString());){
+			PreparedStatement stmt = conn.prepareStatement(querySQL.toString());
+				PreparedStatement countStmt = conn.prepareStatement(countSQL.toString());){
 			stmt.setString(1, "%" + searchKeyword.toUpperCase() + "%");
 			stmt.setInt(2, startRowNo);
 			stmt.setInt(3, endRowNo);
-			try (ResultSet rs = stmt.executeQuery()){			
+			  countStmt.setString(1, "%" + searchKeyword.toUpperCase() + "%");
+			try (ResultSet rs = stmt.executeQuery();ResultSet countRs = countStmt.executeQuery()){			
+				if (countRs.next()) {
+	                totalRecords = countRs.getInt(1);
+	                goodsResult.setTotalRecords(totalRecords);
+	            }
 				while(rs.next()){
 					Goods good = new Goods();
 					good.setGoodsID(rs.getBigDecimal("GOODS_ID"));
@@ -192,12 +205,13 @@ public class FrontEndDao {
 					good.setStatus(rs.getString("STATUS"));
 					goods.add(good);
 				}
+				goodsResult.setGoods(goods);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		
-		return goods;
+		return goodsResult;
 	}
 
 	/**

@@ -7,8 +7,6 @@
 
 package com.training.model;
 
-import java.math.BigDecimal;
-
 /**
 *
 *

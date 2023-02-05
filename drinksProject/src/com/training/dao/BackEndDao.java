@@ -17,13 +17,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
-import com.training.DBConnectionFactory;
 import com.training.model.Cond;
 import com.training.model.Goods;
-import com.training.model.Member;
+import com.training.utils.DBConnectionFactory;
 import com.training.vo.GoodsMaxMin;
 import com.training.vo.SalesReport;
 
