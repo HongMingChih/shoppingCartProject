@@ -36,25 +36,27 @@ public class LoginAction extends DispatchAction {
         String inputPwd = request.getParameter("password");
         // Step2:依使用者所輸入的帳戶名稱取得 Member
         Member account = frontendService.queryMemberByIdentificationNo(inputID);
+        String loginMsg = null;
     	if(account != null) {
     		// Step3:取得帳戶後進行帳號、密碼比對
     		String id = account.getIdentificationNo();    		
     		String pwd = account.getPassword();
     		if(id.equals(inputID) && pwd.equals(inputPwd)) {
-    			System.out.println(account.getCustomerName() + " 先生/小姐您好!");
+    			loginMsg = account.getCustomerName() + " 先生/小姐您好!";
     			// 將account存入session scope 以供LoginCheckFilter之後使用!
     			session.setAttribute("account", account);
-    			actFwd = mapping.findForward("success");        			
+    			actFwd = mapping.findForward("success");        			       			
     		} else {
-                // Step4:帳號、密碼錯誤,轉向到 "/BankLogin.html" 要求重新登入.
-    			System.out.println("帳號或密碼錯誤");
+    			  // Step4:帳號、密碼錯誤,轉向到 "/BankLogin.html" 要求重新登入.
+    			loginMsg = "帳號或密碼錯誤";
     			actFwd = mapping.findForward("fail");
     		}
     	} else {
-            // Step5:無此帳戶名稱,轉向到 "/BankLogin.html" 要求重新登入.
-    		System.out.println("無此帳戶名稱,請重新輸入!");        		
+    		// Step5:無此帳戶名稱,轉向到 "/BankLogin.html" 要求重新登入.
+    		loginMsg = "無此帳戶名稱,請重新輸入!";	
     		actFwd = mapping.findForward("fail");
     	}
+    	request.setAttribute("loginMsg", loginMsg);
     	
     	return actFwd;
     }
@@ -72,11 +74,15 @@ public class LoginAction extends DispatchAction {
             HttpServletRequest request, HttpServletResponse response) throws Exception {
     	// 登出請求
     	HttpSession session = request.getSession();
-		System.out.println("謝謝您的光臨!");
-		session.removeAttribute("account");		
-		session.removeAttribute("carGoods");		
-		session.removeAttribute("allPriceSession");		
-    	
+//		System.out.println("謝謝您的光臨!");
+//		session.removeAttribute("account");		
+//		session.removeAttribute("carGoods");		
+//		session.removeAttribute("allPriceSession");		
+//		session.removeAttribute("message");	
+//		session.removeAttribute("buyGoodsRtn");	
+//		session.removeAttribute("buyGoodsList");	
+		session.invalidate();
+		request.setAttribute("loginMsg", "謝謝您的光臨!");
     	return mapping.findForward("fail");
     }
 }

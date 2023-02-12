@@ -23,6 +23,7 @@ import com.training.model.Cond;
 import com.training.model.Goods;
 import com.training.utils.DBConnectionFactory;
 import com.training.vo.GoodsMaxMin;
+import com.training.vo.GoodsResult;
 import com.training.vo.SalesReport;
 
 
@@ -45,6 +46,58 @@ private static BackEndDao backendDao = new BackEndDao();
 
 	public static BackEndDao getInstance(){
 		return backendDao;
+	}
+	
+	/**
+	 * 後臺分頁
+	 */
+	public GoodsResult searchAllGoods(String searchKeyword, int startRowNo, int endRowNo) {
+		Set<Goods> goods = new LinkedHashSet<>();
+		GoodsResult goodsResult=new GoodsResult();
+		 int totalRecords = 0;
+			// 分頁查詢
+			StringBuffer querySQL = new StringBuffer();
+			querySQL.append("SELECT * FROM ( ");
+			querySQL.append("  SELECT ROWNUM ROW_NUM, G.* FROM BEVERAGE_GOODS G ");
+			querySQL.append("  WHERE UPPER(G.GOODS_NAME) LIKE ? AND G.STATUS = '1' ");
+			querySQL.append("  ORDER BY G.GOODS_ID ");
+			querySQL.append(") WHERE ROW_NUM > ? AND ROW_NUM < ?");
+		    // 獲取所有符合條件的記錄數
+		    StringBuffer countSQL = new StringBuffer();
+		    countSQL.append("SELECT COUNT(*) FROM BEVERAGE_GOODS G ");
+		    countSQL.append("WHERE UPPER(G.GOODS_NAME) LIKE ? AND G.STATUS = '1'");
+	    
+			// Step1:取得Connection
+			try (Connection conn = DBConnectionFactory.getOracleDBConnection();
+			    // Step2:Create prepareStatement For SQL
+				PreparedStatement stmt = conn.prepareStatement(querySQL.toString());
+					PreparedStatement countStmt = conn.prepareStatement(countSQL.toString());){
+				stmt.setString(1, "%" + searchKeyword.toUpperCase() + "%");
+				stmt.setInt(2, startRowNo);
+				stmt.setInt(3, endRowNo);
+				  countStmt.setString(1, "%" + searchKeyword.toUpperCase() + "%");
+				try (ResultSet rs = stmt.executeQuery();ResultSet countRs = countStmt.executeQuery()){			
+					if (countRs.next()) {
+		                totalRecords = countRs.getInt(1);
+		                goodsResult.setTotalRecords(totalRecords);
+		            }
+					while(rs.next()){
+						Goods good = new Goods();
+						good.setGoodsID(rs.getInt("GOODS_ID"));
+						good.setGoodsName(rs.getString("GOODS_NAME"));
+						good.setGoodsPrice(rs.getInt("PRICE"));
+						good.setGoodsQuantity(rs.getInt("QUANTITY"));
+						good.setGoodsImageName(rs.getString("IMAGE_NAME"));
+						good.setStatus(rs.getString("STATUS"));
+						goods.add(good);
+					}
+					goodsResult.setGoods(goods);
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		
+		return goodsResult;
 	}
 	
 	/**
@@ -78,35 +131,46 @@ private static BackEndDao backendDao = new BackEndDao();
 	/**
 	 * 多條件查詢
 	 */
-	public Set<Goods> queryCond(Cond cond, int startRowNo, int endRowNo,String GoodsID) {
+	public Set<Goods> queryCond(Cond cond, int startRowNo, int endRowNo,Integer GoodsID) {
 		Set<Goods> goods = new LinkedHashSet<>();
 		// 
+		boolean flag=false;
 		StringBuffer querySQL = new StringBuffer();
 		querySQL.append("SELECT * FROM ( ");
 		querySQL.append("  SELECT ROWNUM ROW_NUM, G.* FROM BEVERAGE_GOODS G ");
 		querySQL.append("  WHERE G.GOODS_ID LIKE ? AND UPPER(G.GOODS_NAME) LIKE ? ");
 		querySQL.append("  AND G.PRICE BETWEEN ? AND ? AND G.QUANTITY <= ? ");
 		querySQL.append("  AND G.STATUS LIKE ? ORDER BY G.GOODS_ID "+cond.getSortPrice());
-		querySQL.append(")");
-//		querySQL.append(")WHERE ROW_NUM > ? AND ROW_NUM < ?");
+		if (0!=endRowNo) {
+			querySQL.append(")WHERE ROW_NUM > ? AND ROW_NUM < ?");
+			flag=true;
+		}else {
+			querySQL.append(")");
+		}
 
 		// Step1:取得Connection
 		try (Connection conn = DBConnectionFactory.getOracleDBConnection();
 				// Step2:Create prepareStatement For SQL
 				PreparedStatement stmt = conn.prepareStatement(querySQL.toString());) {
-			stmt.setString(1, "%" + GoodsID + "%");
+			if (0!=GoodsID) {
+				stmt.setInt(1, GoodsID);
+			}else {
+				stmt.setString(1, "%"+"%" );
+			}
 			stmt.setString(2, "%" + cond.getGoodsName().toUpperCase() + "%");
 			stmt.setInt(3,cond.getMinPrice());
 			stmt.setInt(4,cond.getMaxPrice());
 			stmt.setInt(5,cond.getGoodsQuantity());
 			stmt.setString(6, "%" + cond.getStatus() + "%");
 //			stmt.setString(7, cond.getSortPrice());
-//			stmt.setInt(7, startRowNo);
-//			stmt.setInt(8, endRowNo);
+			if (flag) {
+				stmt.setInt(7, startRowNo);
+				stmt.setInt(8, endRowNo);
+			}
 			try (ResultSet rs = stmt.executeQuery()){			
 				while(rs.next()){
 					Goods good = new Goods();
-					good.setGoodsID(rs.getBigDecimal("GOODS_ID"));
+					good.setGoodsID(rs.getInt("GOODS_ID"));
 					good.setGoodsName(rs.getString("GOODS_NAME"));
 					good.setGoodsPrice(rs.getInt("PRICE"));
 					good.setGoodsQuantity(rs.getInt("QUANTITY"));
@@ -140,9 +204,11 @@ private static BackEndDao backendDao = new BackEndDao();
 			try(ResultSet rs = stmt.executeQuery()){
 				if(rs.next()){
 					goods = new Goods();
-					goods.setGoodsID(rs.getBigDecimal("GOODS_ID"));
+					goods.setGoodsID(rs.getInt("GOODS_ID"));
+					goods.setGoodsName(rs.getString("GOODS_NAME"));
 					goods.setGoodsPrice(rs.getInt("PRICE"));
 					goods.setGoodsQuantity(rs.getInt("QUANTITY"));
+					goods.setGoodsImageName(rs.getString("IMAGE_NAME"));
 					goods.setStatus(rs.getString("STATUS"));
 				}				
 			}
@@ -170,7 +236,7 @@ private static BackEndDao backendDao = new BackEndDao();
 
 	        while (rs.next()) {
 	            Goods good = new Goods();
-	            good.setGoodsID(rs.getBigDecimal("GOODS_ID"));
+	            good.setGoodsID(rs.getInt("GOODS_ID"));
 	            good.setGoodsName(rs.getString("GOODS_NAME"));
 	            good.setGoodsPrice(rs.getInt("PRICE"));
 	            good.setGoodsQuantity(rs.getInt("QUANTITY"));
@@ -243,7 +309,7 @@ private static BackEndDao backendDao = new BackEndDao();
 				stmt.setInt(1, goods.getGoodsPrice());
 				stmt.setInt(2, goods.getGoodsQuantity());
 				stmt.setString(3, goods.getStatus());
-				stmt.setBigDecimal(4, goods.getGoodsID());
+				stmt.setInt(4, goods.getGoodsID());
 				// Step4:Execute SQL
 				int recordCount = stmt.executeUpdate();
 				updateSuccess = (recordCount > 0) ? true : false;
@@ -337,8 +403,53 @@ private static BackEndDao backendDao = new BackEndDao();
 				}
 		return reports;
 	}
-	
+	/**
+	 * 查詢所有報表
+	 */
+	public Set<SalesReport> queryAllOrder() {
+		Set<SalesReport> reports = new LinkedHashSet<>();
+		String querySQL = "SELECT o.ORDER_ID, m.CUSTOMER_NAME, o.ORDER_DATE, g.GOODS_NAME,"
+                + "g.PRICE, o.BUY_QUANTITY, g.PRICE, o.BUY_QUANTITY*g.PRICE buyAmount FROM BEVERAGE_ORDER o "
+                + "JOIN BEVERAGE_MEMBER m ON o.CUSTOMER_ID = m.IDENTIFICATION_NO "
+                + "JOIN BEVERAGE_GOODS g ON o.GOODS_ID = g.GOODS_ID "
+                + "ORDER BY o.ORDER_ID";
 		
+				try (Connection conn = DBConnectionFactory.getOracleDBConnection();
+					PreparedStatement stmt = conn.prepareStatement(querySQL)){
+					try (ResultSet rs = stmt.executeQuery()){
+						while(rs.next()) {
+							Long orderID=rs.getLong("ORDER_ID");
+							String customerName = rs.getString("CUSTOMER_NAME");
+							SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+							String orderDateStr = rs.getString("ORDER_DATE");
+							Date orderDate = sdf.parse(orderDateStr);
+							String formattedOrderDate = sdf.format(orderDate);
+							
+							String goodsName = rs.getString("GOODS_NAME");
+							int goodsBuyPrice = rs.getInt("PRICE");
+							int buyQuantity = rs.getInt("BUY_QUANTITY");
+							int buyAmount = rs.getInt("BUYAMOUNT");
+
+							SalesReport salesReport = new SalesReport();
+							salesReport.setOrderID(orderID);
+							salesReport.setCustomerName(customerName);
+							salesReport.setOrderDate(formattedOrderDate);
+							salesReport.setGoodsName(goodsName);
+							salesReport.setGoodsBuyPrice(goodsBuyPrice);
+							salesReport.setBuyQuantity(buyQuantity);
+							salesReport.setBuyAmount(buyAmount);
+							reports.add(salesReport);
+						}	
+					} catch (SQLException e) {
+						throw e;
+					} catch (ParseException e) {
+						e.printStackTrace();
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+		return reports;
+	}
 	
 	
 }

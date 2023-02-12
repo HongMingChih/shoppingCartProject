@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
+	<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,6 +11,7 @@
 	href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 <body>
+	
 	<!-- 第一層 -->
 	<div class="container-fluid">
 		<div class="row content2">
@@ -21,6 +23,9 @@
 						<H3>登入帳號</H3>
 					</div>
 					<div class="card-body">
+						<c:if test="${not empty requestScope.loginMsg}">
+								系統回應：<p style="color:blue;">${requestScope.loginMsg}</p>
+							</c:if>
 						<form action="LoginAction.do?action=login" method="post">
 							<div class="form-floating mb-3">
 								<input type="text" class="form-control" name="identificationNo"" 
@@ -32,6 +37,7 @@
 								required="required" placeholder="請輸入密碼"><label
 									for="exampLeInputPassword1"></label>
 							</div>
+						
 	
 							<div
 								class="d-flex align-items-center justify-content-between mt-4 mb-0">

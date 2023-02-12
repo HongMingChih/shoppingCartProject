@@ -12,27 +12,15 @@
 </head>
 <body>
 	<h1>Vending Machine Backend Service</h1><br/>		
-	<table border="1" style="border-collapse:collapse;;margin-left:25px;">
-		<tr>
-			<td width="200" height="50" align="center">
-				<a href="BackendAction.do?action=queryGood">商品列表</a>
-			</td>
-			<td width="200" height="50" align="center">
-				<a href="BackendAction.do?action=updateGoodView">商品維護作業</a>
-			</td>
-			<td width="200" height="50" align="center">
-				<a href="BackendAction.do?action=goodsCreateView">商品新增上架</a>
-			</td>
-			<td width="200" height="50" align="center">
-				<a href="BackendAction.do?action=salesReportView">銷售報表</a>
-			</td>
-		</tr>
-	</table>
-	<br/><br/><HR>
+	<!-- 上方標頭 -->
+	<%@include file="LinkHeader.jsp" %>
 		
 	<h2>商品新增上架</h2><br/>
 	<div style="margin-left:25px;">
-	<form action="BackendAction.do?action=add" enctype="multipart/form-data" method="post">
+	<p style="color:blue;">${sessionScope.modifyMsg}</p>
+	<% session.removeAttribute("modifyMsg"); %>
+	<form action="BackendActionCreate.do?action=addGoods" enctype="multipart/form-data" method="post">
+	
 		<p>
 			飲料名稱：
 			<input type="text" name="goodsName" size="10"/>

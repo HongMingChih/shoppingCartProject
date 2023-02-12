@@ -49,11 +49,11 @@ public class FrontendAction extends DispatchAction {
 				HttpServletResponse response)
 				throws Exception {
 			System.out.println("vendingBuyViewMessage...");
-			BuyGoodsRtn buyGoodsRtn= (BuyGoodsRtn) request.getAttribute("buyGoodsRtn");
-			Map<Goods, Integer> buyGoods=  (Map<Goods, Integer>) request.getAttribute("buyGoodsList");
-			
-			request.setAttribute("buyGoodsRtn", buyGoodsRtn);
-			request.setAttribute("buyGoodsList", buyGoods);
+//			BuyGoodsRtn buyGoodsRtn= (BuyGoodsRtn) request.getAttribute("buyGoodsRtn");
+//			Map<Goods, Integer> buyGoods=  (Map<Goods, Integer>) request.getAttribute("buyGoodsList");
+//			
+//			request.setAttribute("buyGoodsRtn", buyGoodsRtn);
+//			request.setAttribute("buyGoodsList", buyGoods);
 			ActionForward actionForward=mapping.findForward("vendingBuyMessageView");
 			return actionForward;
 		}
@@ -76,38 +76,54 @@ public class FrontendAction extends DispatchAction {
 		String customerID=request.getParameter("customerID");
 		int inputMoney= Integer.parseInt(request.getParameter("inputMoney"));
 		Integer allPrice= session.getAttribute("allPriceSession")==null?0:(Integer) session.getAttribute("allPriceSession");
+
 		BuyGoodsRtn buyGoodsRtn=new BuyGoodsRtn();
 		buyGoodsRtn.setInputMoney(inputMoney);//輸入金額
 		buyGoodsRtn.setAllMoney(allPrice);//總消費金額
-		int change=inputMoney>=allPrice?change=inputMoney-allPrice:allPrice;//找零
-		buyGoodsRtn.setChange(change);	
+		
+		
+		
 		if (inputMoney<allPrice||inputMoney<=0) {
-			request.setAttribute("message", "輸入金額不足，請投入正確金額!!");
-			actionForward=mapping.findForward("vendingViewError");
-			return actionForward;
-		}
-		if (session.getAttribute("carGoods") == null) {
-			request.setAttribute("message", "您還沒選購商品!!");
-			request.setAttribute("buyGoodsRtn", buyGoodsRtn);
+			session.setAttribute("message", "輸入金額不足，請投入正確金額!!");
+			int change=inputMoney>=allPrice?change=inputMoney-allPrice:inputMoney;//找零
+			buyGoodsRtn.setChange(change);	
+			session.setAttribute("buyGoodsRtn", buyGoodsRtn);
 			actionForward=mapping.findForward("vendingBuyMessage");
 			return actionForward;
 		}
-		
-	
-		Map<Goods, Integer> carGoods = (Map<Goods, Integer>) session.getAttribute("carGoods");
-		Map<Goods, Integer> buyGoods=new LinkedHashMap<>();
+		if (session.getAttribute("carGoods") == null||allPrice==0) {
+			session.setAttribute("message", "您還沒選購商品!!");
+			int change=inputMoney>=allPrice?change=inputMoney-allPrice:inputMoney;//找零
+			buyGoodsRtn.setChange(change);	
+			session.setAttribute("buyGoodsRtn", buyGoodsRtn);
+			actionForward=mapping.findForward("vendingBuyMessage");
+			return actionForward;
+		}else {
+			
+			Map<Goods, Integer> carGoods = (Map<Goods, Integer>) session.getAttribute("carGoods");
+			Map<Goods, Integer> buyGoods=new LinkedHashMap<>();
+//			int allMoney=0;
+//			allMoney+=allPrice;
 			for (Map.Entry<Goods, Integer> entry : carGoods.entrySet()) {
 				Goods goods = entry.getKey();
 				Goods queryGoods=frontendService.queryGoodsById(goods.getGoodsID().toString());
 				if (queryGoods.getGoodsQuantity()>= entry.getValue()) {
+					int change=inputMoney>=allPrice?change=inputMoney-allPrice:inputMoney;//找零
+					buyGoodsRtn.setChange(change);	
 					goods.setGoodsQuantity(goods.getGoodsQuantity()-entry.getValue());
 					buyGoods.put(goods,entry.getValue());
 				}else {
-					System.out.println("目前商品庫存不足: "+goods.getGoodsName()+" 剩餘庫存: "+goods.getGoodsQuantity());
-					request.setAttribute("message", "庫存不足，請選取適當數量!!");
+					String message="目前商品庫存不足將取消選購: 請確認購買數量重新選取";
+//					System.out.println("目前商品庫存不足: "+goods.getGoodsName()+" 剩餘庫存: "+goods.getGoodsQuantity());
+					
+					session.setAttribute("message", message);
+					buyGoodsRtn.setChange(inputMoney);
+					buyGoodsRtn.setAllMoney(allPrice);
+					session.setAttribute("buyGoodsRtn", buyGoodsRtn);
+					
 					session.removeAttribute("carGoods");
 					session.removeAttribute("allPriceSession");	
-					actionForward=mapping.findForward("vendingViewError");
+					actionForward=mapping.findForward("vendingBuyMessage");
 					return actionForward;
 				}
 			}
@@ -119,11 +135,14 @@ public class FrontendAction extends DispatchAction {
 			boolean updateSuccess = frontendService.batchUpdateGoodsQuantity(buyGoods.keySet().stream().collect(Collectors.toSet()));
 			if(updateSuccess){System.out.println("商品庫存更新成功!");}
 			
+			session.setAttribute("message", "謝謝光臨!!");
+			session.setAttribute("buyGoodsRtn", buyGoodsRtn);
+			session.setAttribute("buyGoodsList", buyGoods);
+			session.removeAttribute("carGoods");
+			session.removeAttribute("allPriceSession");	
+		}
 		
-			request.setAttribute("buyGoodsRtn", buyGoodsRtn);
-			 request.setAttribute("buyGoodsList", buyGoods);
-			 session.removeAttribute("carGoods");
-			 session.removeAttribute("allPriceSession");	
+	
 			 
 		actionForward=mapping.findForward("vendingBuyMessage");
 		

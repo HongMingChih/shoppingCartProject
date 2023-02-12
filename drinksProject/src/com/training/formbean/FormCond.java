@@ -26,7 +26,7 @@ private Integer goodsID;
 private String goodsName;
 private Integer minPrice;
 private Integer maxPrice;
-private String sortPrice;
+private String sortPrice;//排序方式
 private Integer goodsQuantity;
 private String status;
 

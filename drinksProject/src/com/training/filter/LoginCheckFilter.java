@@ -27,9 +27,29 @@ public class LoginCheckFilter implements Filter {
 		HttpSession session = httpRequest.getSession();
 		
 		Member account = (Member) session.getAttribute("account");
+		String message=	(String) session.getAttribute("message");
+		if (message!=null) {
+			String requestURI = httpRequest.getRequestURI();
+			String action = request.getParameter("action");
+			 if(requestURI.endsWith("FrontendAction.do") && "vendingBuyViewMessage".equals(action)) {
+	            	chain.doFilter(request,response);
+	            }else {
+	            	session.removeAttribute("message");	
+	            	session.removeAttribute("buyGoodsRtn");	
+	        		session.removeAttribute("buyGoodsList");	
+	        		
+				}
+		}
+		
         // 如果存在就放行.
         if(account != null){
-            chain.doFilter(request,response);
+        	String requestURI = httpRequest.getRequestURI();
+        	String action = request.getParameter("action");
+        	//判斷是否為查詢分頁
+            if(!requestURI.endsWith("BackendAction.do") || !"queryGood".equals(action)) {
+            	session.removeAttribute("formCond");
+            } 
+            	chain.doFilter(request,response);
         } else {
             // 如果不存在就必須先判斷目前是否為登入/註冊的請求,是的話則進行後續帳密驗證比對 LoginAction
         	String requestURI = httpRequest.getRequestURI();

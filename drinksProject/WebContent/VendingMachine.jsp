@@ -1,9 +1,6 @@
 ﻿<%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@page import="com.training.model.Goods"%>
-<%@page import="com.training.model.Member"%>
-<%@page import="com.training.vo.BuyGoodsRtn"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -35,8 +32,17 @@
 					location.reload();
 				}
 			}
-			
+		
+			// 接回XMLHttpRequest非同步請求回傳
+			request.onreadystatechange = function() {
+		        if (this.readyState == 4 && this.status == 200) {
+		            const response = request.responseText;		            
+		            const responseJson = JSON.parse(response);		            
+		            alert(JSON.stringify(responseJson, null, 3));
+		      };
+		   }
 		}
+		
 		function queryCartGoods(){
 			const formData = new FormData();
 			formData.append('action', 'queryCartGoods');
@@ -45,11 +51,19 @@
 			request.open("POST", "MemberAction.do?action=queryCartGoods");			
 			request.send(formData);
 			//送出請求後跳轉頁面
-			request.onload = function() {
+				request.onload = function() {
 				if (request.status === 200){
-					window.location.href = "../JavaEE_Session4_Homework/MemberAction.do?action=queryCartGoods";
+					location.reload();
 				}
 			}
+			// 接回XMLHttpRequest非同步請求回傳
+			request.onreadystatechange = function() {
+		        if (this.readyState == 4 && this.status == 200) {
+		            const response = request.responseText;		            
+		            const responseJson = JSON.parse(response);		            
+		            alert(JSON.stringify(responseJson, null, 3));
+		      };
+		   }
 		}
 		function clearCartGoods(){
 			const formData = new FormData();
@@ -57,15 +71,14 @@
 			// 送出清空購物車商品請求
 			const request = new XMLHttpRequest();
 			request.open("POST", "MemberAction.do?action=clearCartGoods");			
-			request.send(formData);		
-			//送出請求後跳轉頁面
+			request.send(formData);	
+			
 			request.onload = function() {
 				if (request.status === 200){
-					window.location.href = "../JavaEE_Session4_Homework/MemberAction.do?action=queryCartGoods";
+					location.reload();
 				}
-				
-			}
 		}
+	}
 	</script>
 </head>
 
@@ -96,7 +109,7 @@
 			<h1>歡迎光臨，${sessionScope.account.getCustomerName()}！</h1>	
 			<a href="BackendAction.do?action=queryGood" align="left" >後臺頁面</a>&nbsp; &nbsp;
 			<a href="LoginAction.do?action=logout" align="left">登出</a>
-			<a href="MemberAction.do?action=queryCartGoods" align="left" >購物車</a>
+			<a href="MemberAction.do?action=goCart" align="left" >前往購物車</a>
 			<br/><br/>
 			
 			<font face="微軟正黑體" size="4" >
@@ -113,13 +126,13 @@
 
 				<p style="margin: 10px;">
 <!-- 					投入金額：150 -->
-					<c:if test="${not empty requestScope.message}">
-					    <span style="color:red;">${requestScope.message}</span>
+					<c:if test="${not empty sessionScope.message}">
+					    <span style="color:red;">${sessionScope.message}</span>
 					<br>
 					</c:if>
 					
-					<c:if test="${not empty requestScope.buyGoodsRtn}">
-					 投入金額： ${requestScope.buyGoodsRtn.getInputMoney()} 元
+					<c:if test="${not empty sessionScope.message}">
+					 投入金額： ${sessionScope.buyGoodsRtn.getInputMoney()} 元
 					</c:if>
 					
 <%-- 					投入金額：<%= Rtn.getInputMoney() %> --%>
@@ -127,20 +140,20 @@
 				<p style="margin: 10px;">
 <!-- 					購買金額：111 -->
 <%-- 					購買金額：<%= Rtn.getAllMoney() %> --%>
-					<c:if test="${not empty requestScope.buyGoodsRtn}">
-					 購買金額： ${requestScope.buyGoodsRtn.getAllMoney()} 元
+					<c:if test="${not empty sessionScope.message}">
+					 購買金額： ${sessionScope.buyGoodsRtn.getAllMoney()} 元
 					</c:if>
 				</p>
 				<p style="margin: 10px;">
 <!-- 					找零金額：39 -->
 <%-- 					找零金額：<%= Rtn.getChange() %> --%>
-					<c:if test="${not empty requestScope.buyGoodsRtn}">
-					 找零金額： ${requestScope.buyGoodsRtn.getChange()} 元
+					<c:if test="${not empty sessionScope.message}">
+					 找零金額： ${sessionScope.buyGoodsRtn.getChange()} 元
 					</c:if>
 				</p>
-					<c:if test="${not empty requestScope.buyGoodsList}">
+					<c:if test="${not empty sessionScope.buyGoodsList}">
 					<p style="color: blue;">~~~~ 購買商品 ~~~~</p>
-						<c:forEach items="${requestScope.buyGoodsList}" var="entry">
+						<c:forEach items="${sessionScope.buyGoodsList}" var="entry">
 						
 						   商品名稱: <c:out value="${entry.key.getGoodsName()}" />
 					 	   商品金額: <c:out value="${entry.key.getGoodsPrice()}" />
