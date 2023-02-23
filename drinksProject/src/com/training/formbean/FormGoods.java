@@ -29,18 +29,16 @@ public class FormGoods extends ActionForm {
 	private int goodsPrice;
 	private int goodsQuantity;
 	private String goodsImageName;
-	private InputStream goodsImage;
 	private String status;
 
 	public FormGoods(Integer goodsID, String goodsName, int goodsPrice, int goodsQuantity, String goodsImageName,
-			InputStream goodsImage, String status) {
+			 String status) {
 		super();
 		this.goodsID = goodsID;
 		this.goodsName = goodsName;
 		this.goodsPrice = goodsPrice;
 		this.goodsQuantity = goodsQuantity;
 		this.goodsImageName = goodsImageName;
-		this.goodsImage = goodsImage;
 		this.status = status;
 	}
 
@@ -48,13 +46,6 @@ public class FormGoods extends ActionForm {
 		super();
 	}
 
-	public InputStream getGoodsImage() {
-		return goodsImage;
-	}
-
-	public void setGoodsImage(InputStream goodsImage) {
-		this.goodsImage = goodsImage;
-	}
 
 	public Integer getGoodsID() {
 		return goodsID;

@@ -8,7 +8,9 @@
 package com.training.action;
 
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +38,8 @@ import com.training.service.BackendService;
 import com.training.vo.GoodsResult;
 import com.training.vo.SalesReport;
 
+import net.sf.json.JSONObject;
+
 /**
 *
 *
@@ -62,6 +66,24 @@ public class BackendAction extends DispatchAction{
 		
 		return mapping.findForward("salesReportView");
 	}
+	
+    // for AJAX 使用
+    public ActionForward getModifyGood(ActionMapping mapping, ActionForm form, 
+            HttpServletRequest request, HttpServletResponse response) throws IOException {
+		System.out.println("getModifyGoods...");
+		// 被選擇要修改的帳號資料		
+		String id = request.getParameter("id");
+		Goods goods = backendService.queryGoodsById(new BigDecimal(id));
+		
+		response.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json");
+		PrintWriter out = response.getWriter();
+		out.println(JSONObject.fromObject(goods));
+		out.flush();
+		out.close();
+		
+    	return null;
+    }
 	//更新跳轉
 	public ActionForward updateGoodView(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
 			HttpServletResponse response)
@@ -93,12 +115,10 @@ public class BackendAction extends DispatchAction{
 			throws Exception {
 		System.out.println("updateGoods...");
 		HttpSession session = request.getSession();
+		JSONObject queryResult = new JSONObject();
 		// 將表單資料使用 struts ActionForm 方式自動綁定，省去多次由 request getParameter 取表單資料的工作
 		FormGoods formGoods = (FormGoods) form;
-		if (formGoods.getGoodsID()==0) {
-			session.setAttribute("modifyMsg", "請選擇需要維護的商品!!");
-			return mapping.findForward("updateGood");
-		}
+		
 		
 		// 將Struts BackedActionForm 資料複製 Goods
 		// 將表單資料轉換儲存資料物件(commons-beanutils-1.8.0.jar)
@@ -107,14 +127,111 @@ public class BackendAction extends DispatchAction{
 		
 		
 		boolean updateGood=backendService.updateGoods(goods);
-		
 		String message = updateGood ? "商品維護作業成功！" : "商品維護作業失敗！";
+		if (updateGood) {
+//			session.setAttribute("modifyMsg", "請選擇需要維護的商品!!");
+//			return mapping.findForward("updateGood");
+			queryResult.put("queryStatus", true);
+			queryResult.put("goodsList", goods);
+			queryResult.put("queryMessage", message);
+		}else {
+			queryResult.put("queryStatus", false);
+			queryResult.put("queryMessage", message);
+		}
+//		session.setAttribute("modifyMsg", message);
+//		session.setAttribute("modifyGoodsID", goods.getGoodsID().toString());
+		response.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json");
+		PrintWriter out = response.getWriter();
+//		out.println(JSONObject.fromObject(formGoods));
+		out.println(queryResult);
+		out.flush();
+		out.close();
 		
-		session.setAttribute("modifyMsg", message);
-		session.setAttribute("modifyGoodsID", goods.getGoodsID().toString());
-		
-		return mapping.findForward("updateGood");
+    	return null;
+//		return mapping.findForward("updateGood");
 	}
+	//新增商品 圖片
+		public ActionForward addGoods(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
+				HttpServletResponse response)
+				throws Exception {
+			System.out.println("addGoods...");
+			Goods goods = new Goods();
+			DiskFileItemFactory factory = new DiskFileItemFactory();
+			ServletFileUpload upload = new ServletFileUpload(factory);
+			List<FileItem> items = upload.parseRequest(request);
+			HttpSession session=request.getSession();
+			String goodsName="";
+			for (FileItem item : items) {
+			    if (item.isFormField()) {
+			        // Process regular form field (input type="text|radio|checkbox|etc", select, etc).
+			        String fieldName = item.getFieldName();
+			        String fieldValue = item.getString().trim();
+			        switch (fieldName) {
+			            case "goodsName":
+			            	if (fieldValue.equals("")) {
+			            		session.setAttribute("modifyMsg", "請輸入商品名稱!!");
+			            		return mapping.findForward("goodsCreate");
+			            	}
+			            	goodsName = new String(fieldValue.getBytes("ISO-8859-1"), "UTF-8");
+			                goods.setGoodsName(goodsName);
+			                break;
+			            case "goodsPrice":
+			            	if (fieldValue.equals("")||Integer.parseInt(fieldValue)==0) {
+			            		session.setAttribute("modifyMsg", "請輸入商品價格!!");
+			            		return mapping.findForward("goodsCreate");
+			            	}
+			                goods.setGoodsPrice(Integer.parseInt(fieldValue));
+			                break;
+			            case "goodsQuantity":
+			            	if (fieldValue.equals("")||Integer.parseInt(fieldValue)==0) {
+			            		session.setAttribute("modifyMsg", "請輸入商品數量!!");
+			            		return mapping.findForward("goodsCreate");
+			            	}
+			                goods.setGoodsQuantity(Integer.parseInt(fieldValue));
+			                break;
+			            case "status":
+			                goods.setStatus(fieldValue);
+			                break;
+			        }
+			    } else {
+			       //上傳圖片
+			        String fieldName = item.getFieldName();
+			        String fileName = FilenameUtils.getName(item.getName()).replaceAll("\\s+", "");
+			        InputStream fileContent = item.getInputStream();
+			        if (fileName.equals("")) {
+	            		session.setAttribute("modifyMsg", "請上傳商品圖片!!");
+	            		return mapping.findForward("goodsCreate");
+	            	}
+			        if (fieldName.equals("goodsImage")) {
+			            goods.setGoodsImageName(fileName);
+			            String filePath = "C:\\Eclipse_File\\Web_File\\JavaEE_Session4_Homework\\WebContent\\DrinksImage\\" + fileName;
+			            FileOutputStream fos = new FileOutputStream(filePath);
+			            byte[] buffer = new byte[1024];
+			            int length;
+			            while ((length = fileContent.read(buffer)) > 0) {
+			                fos.write(buffer, 0, length);
+			            }
+			            fos.close();
+			        }
+			    }
+			}
+			    
+			// 將Struts BackedActionForm 資料複製 Goods
+			// 將表單資料轉換儲存資料物件(commons-beanutils-1.8.0.jar)
+//			Goods goods =new Goods();
+//			BeanUtils.copyProperties(goods,formGood);
+			int createGood=backendService.createGoods(goods);
+			
+			String message = createGood!=0 ? "商品新增上架成功！" : "商品新增上架失敗！";
+//			System.out.println(message);
+			message+="商品 "+goodsName+" 編號: "+createGood;
+			session.setAttribute("modifyMsg", message);
+			
+			ActionForward actionForward=mapping.findForward("goodsCreate");
+			return actionForward;
+		}	
+		
 	
 	//新增跳轉
 	public ActionForward goodsCreateView(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
@@ -182,87 +299,6 @@ public class BackendAction extends DispatchAction{
 	}
 	
 	
-	//新增商品 圖片
-	public ActionForward addGoods(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
-			HttpServletResponse response)
-			throws Exception {
-		System.out.println("addGoods...");
-		Goods goods = new Goods();
-		DiskFileItemFactory factory = new DiskFileItemFactory();
-		ServletFileUpload upload = new ServletFileUpload(factory);
-		List<FileItem> items = upload.parseRequest(request);
-		HttpSession session=request.getSession();
-		String goodsName="";
-		for (FileItem item : items) {
-		    if (item.isFormField()) {
-		        // Process regular form field (input type="text|radio|checkbox|etc", select, etc).
-		        String fieldName = item.getFieldName();
-		        String fieldValue = item.getString().trim();
-		        switch (fieldName) {
-		            case "goodsName":
-		            	if (fieldValue.equals("")) {
-		            		session.setAttribute("modifyMsg", "請輸入商品名稱!!");
-		            		return mapping.findForward("goodsCreate");
-		            	}
-		            	goodsName = new String(fieldValue.getBytes("ISO-8859-1"), "UTF-8");
-		                goods.setGoodsName(goodsName);
-		                break;
-		            case "goodsPrice":
-		            	if (fieldValue.equals("")||Integer.parseInt(fieldValue)==0) {
-		            		session.setAttribute("modifyMsg", "請輸入商品價格!!");
-		            		return mapping.findForward("goodsCreate");
-		            	}
-		                goods.setGoodsPrice(Integer.parseInt(fieldValue));
-		                break;
-		            case "goodsQuantity":
-		            	if (fieldValue.equals("")||Integer.parseInt(fieldValue)==0) {
-		            		session.setAttribute("modifyMsg", "請輸入商品數量!!");
-		            		return mapping.findForward("goodsCreate");
-		            	}
-		                goods.setGoodsQuantity(Integer.parseInt(fieldValue));
-		                break;
-		            case "status":
-		                goods.setStatus(fieldValue);
-		                break;
-		        }
-		    } else {
-		       //上傳圖片
-		        String fieldName = item.getFieldName();
-		        String fileName = FilenameUtils.getName(item.getName()).replaceAll("\\s+", "");
-		        InputStream fileContent = item.getInputStream();
-		        if (fileName.equals("")) {
-            		session.setAttribute("modifyMsg", "請上傳商品圖片!!");
-            		return mapping.findForward("goodsCreate");
-            	}
-		        if (fieldName.equals("goodsImage")) {
-		            goods.setGoodsImage(fileContent);
-		            goods.setGoodsImageName(fileName);
-		            String filePath = "C:\\Eclipse_File\\Web_File\\JavaEE_Session4_Homework\\WebContent\\DrinksImage\\" + fileName;
-		            FileOutputStream fos = new FileOutputStream(filePath);
-		            byte[] buffer = new byte[1024];
-		            int length;
-		            while ((length = fileContent.read(buffer)) > 0) {
-		                fos.write(buffer, 0, length);
-		            }
-		            fos.close();
-		        }
-		    }
-		}
-		    
-		// 將Struts BackedActionForm 資料複製 Goods
-		// 將表單資料轉換儲存資料物件(commons-beanutils-1.8.0.jar)
-//		Goods goods =new Goods();
-//		BeanUtils.copyProperties(goods,formGood);
-		int createGood=backendService.createGoods(goods);
-		
-		String message = createGood!=0 ? "商品新增上架成功！" : "商品新增上架失敗！";
-//		System.out.println(message);
-		message+="商品 "+goodsName+" 編號: "+createGood;
-		session.setAttribute("modifyMsg", message);
-		
-		ActionForward actionForward=mapping.findForward("goodsCreate");
-		return actionForward;
-	}	
 	
 	
 	public ActionForward queryGood(ActionMapping mapping, ActionForm form, HttpServletRequest request, 
